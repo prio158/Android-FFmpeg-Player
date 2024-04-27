@@ -56,7 +56,6 @@ bool IOSchedule::stopping(uint64_t &timeout) {
 
 
 void IOSchedule::onTimerInsertedAtFront() {
-    LOGI("通知触发定时任务");
     loopEvent();
 }
 

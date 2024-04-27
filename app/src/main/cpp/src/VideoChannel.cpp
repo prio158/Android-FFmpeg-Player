@@ -50,7 +50,7 @@ void VideoChannel::_play() {
     while (isPlaying) {
 
         /* 阻塞方法，当队列中没有数据的时候，会阻塞在这里await，只有在队列有数据的时候，会解除阻塞*/
-        ret = frame_queue.deQueue(av_frame);
+        ret = frame_queue.deQueue(av_frame, true, false);
 
         /* 停止播放时候，直接退出 */
         if (!isPlaying)
@@ -108,8 +108,7 @@ void VideoChannel::decode() {
     AVPacket *packet = nullptr;
     while (isPlaying) {
         /* deQueue 是一个阻塞方法，当pkt_queue空的时候，会阻塞，直到pkt_queue存入新的数据。*/
-        LOGW("消费数据，pkt_queue Size：%d", pkt_queue.size());
-        int ret = pkt_queue.deQueue(packet,true);
+        int ret = pkt_queue.deQueue(packet, true, true);
         /* 停止播放时候，直接退出 */
         if (!isPlaying) {
             break;
@@ -142,8 +141,6 @@ void VideoChannel::decode() {
             break;
         }
         frame_queue.enQueue(frame, true);
-        LOGI("生产数据，frame_queue 队列 Size：%d", frame_queue.size());
-        LOGI("------------------------------------------------------");
     }
     releaseAvPacket(packet);
 }

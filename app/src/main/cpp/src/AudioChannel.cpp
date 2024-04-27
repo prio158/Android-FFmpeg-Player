@@ -49,7 +49,7 @@ void AudioChannel::decode() {
     AVPacket *pkt = nullptr;
     int ret;
     while (isPlaying) {
-        ret = pkt_queue.deQueue(pkt);
+        ret = pkt_queue.deQueue(pkt, false,true);
 
         if (!isPlaying)
             break;
@@ -67,7 +67,7 @@ void AudioChannel::decode() {
         auto frame = av_frame_alloc();
         ret = avcodec_receive_frame(avCodecContext, frame);
         if (ret == 0) {
-            frame_queue.enQueue(frame);
+            frame_queue.enQueue(frame,false);
         } else if (ret == AVERROR(EAGAIN)) {
             releaseAvPacket(pkt);
             continue;
@@ -193,7 +193,7 @@ int AudioChannel::_getData() {
     int ret;
     int data_size = 0;
     while (isPlaying) {
-        ret = frame_queue.deQueue(avFrame);
+        ret = frame_queue.deQueue(avFrame, false,false);
         if (!isPlaying)
             break;
 

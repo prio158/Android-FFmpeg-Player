@@ -7,13 +7,13 @@
 void *prepareCallback(void *args) {
     auto player = static_cast<Player *>(args);
     player->_prepareTaskCallback();
-    return 0;
+    return nullptr;
 }
 
 void *startCallback(void *args) {
     auto player = static_cast<Player *>(args);
     player->_startTaskCallback();
-    return 0;
+    return nullptr;
 }
 
 Player::Player(JavaVM *vm, JNIEnv *env, jobject *jobj) {
@@ -87,7 +87,7 @@ void Player::_prepareTaskCallback() {
         }
         auto type = parma->codec_type;
         if (type == AVMEDIA_TYPE_AUDIO) {
-             audioChannel = new AudioChannel(i, playerHelper, codec_context, stream->time_base);
+            audioChannel = new AudioChannel(i, playerHelper, codec_context, stream->time_base);
         } else if (type == AVMEDIA_TYPE_VIDEO) {
             auto fps = av_q2d(stream->avg_frame_rate);
             videoChannel = new VideoChannel(i, playerHelper, codec_context, stream->time_base, fps);
@@ -95,7 +95,7 @@ void Player::_prepareTaskCallback() {
     }
 
     /* 没有视频流 */
-    if (videoChannel == nullptr) {
+    if (videoChannel == nullptr && audioChannel == nullptr) {
         LOGE("[path:%s] have no media data", m_path);
         playerHelper->onError(FFMPEG_NO_MEDIA_DATA, THREAD_CHILD);
         return;
@@ -113,12 +113,10 @@ void Player::_startTaskCallback() {
         ret = av_read_frame(avFormatContext, packet);
         if (ret == 0) {
             if (packet->stream_index == videoChannel->channelId) {
-                videoChannel->pkt_queue.enQueue(packet,true);
-            }
-            else if (packet->stream_index == audioChannel->channelId) {
-                audioChannel->pkt_queue.enQueue(packet);
-            }
-            else {
+                videoChannel->pkt_queue.enQueue(packet, true,true);
+            } else if (packet->stream_index == audioChannel->channelId) {
+                audioChannel->pkt_queue.enQueue(packet,false,true);
+            } else {
                 LOGE("UNKOWN, packet->stream_index:%d", packet->stream_index);
                 av_packet_free(&packet);
             }
@@ -132,6 +130,7 @@ void Player::_startTaskCallback() {
                 LOGD("Player READ, AVERROR_EOF");
                 break;
             }
+            LOGE("FILE READ EOF");
         } else {
             LOGD("Player READ,ERROR");
             av_packet_free(&packet);
@@ -147,7 +146,7 @@ void Player::start() {
     isPlaying = true;
     videoChannel->play();
     audioChannel->play();
-    pthread_create(&startTask, 0, startCallback, this);
+    pthread_create(&startTask, nullptr, startCallback, this);
 }
 
 void Player::setNativeWindow(ANativeWindow *window_) {
@@ -162,12 +161,9 @@ void Player::setNativeWindow(ANativeWindow *window_) {
 Player::~Player() {
     if (avFormatContext != nullptr)
         avformat_free_context(avFormatContext);
-    if (m_path != nullptr)
-        delete[] m_path;
-    if (playerHelper != nullptr)
-        delete playerHelper;
-    if (videoChannel != nullptr)
-        delete videoChannel;
+    delete[] m_path;
+    delete playerHelper;
+    delete videoChannel;
 }
 
 void Player::stop() {
