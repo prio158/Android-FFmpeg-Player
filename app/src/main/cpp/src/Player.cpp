@@ -113,19 +113,20 @@ void Player::_startTaskCallback() {
         ret = av_read_frame(avFormatContext, packet);
         if (ret == 0) {
             if (packet->stream_index == videoChannel->channelId) {
-                videoChannel->pkt_queue.enQueue(packet);
+                videoChannel->pkt_queue.enQueue(packet,true);
             }
 //            else if (packet->stream_index == audioChannel->channelId) {
 //                audioChannel->pkt_queue.enQueue(packet);
 //            }
             else {
-                LOGE("UNKOWN, packet->stream_index:%d", packet->stream_index);
+                //LOGE("UNKOWN, packet->stream_index:%d", packet->stream_index);
                 av_packet_free(&packet);
             }
         } else if (ret == AVERROR_EOF) {
             // end of file, no data
             // 读取完毕，不一定播放完毕，因为不是说读一个packet，马上送到解码器里面去解码,而是送入缓冲队列中
             // 所以读取和播放不是同步的,读完了，数据都在队列里面，还没有播放完
+            av_packet_free(&packet);
             if (!videoChannel->hasPacketData() && !videoChannel->hasFrameData()) {
                 //播放完毕,才能break
                 LOGD("Player READ, AVERROR_EOF");
@@ -133,6 +134,7 @@ void Player::_startTaskCallback() {
             }
         } else {
             LOGD("Player READ,ERROR");
+            av_packet_free(&packet);
             break;
         }
     }

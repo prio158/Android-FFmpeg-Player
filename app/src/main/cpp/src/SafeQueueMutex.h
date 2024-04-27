@@ -29,7 +29,6 @@ public:
 
 
     void enQueue(T new_value, bool video = false) {
-
         if (checkQueueHasEnoughData()) {
             Mutex::Lock lock(size_mutex);
             LOGI("TAG 等待 5s 前的，pkt_queue size:%d", size());

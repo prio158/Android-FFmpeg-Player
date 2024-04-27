@@ -75,6 +75,7 @@ void VideoChannel::_play() {
         //比如: HAVE_SIMD_ALIGN_64（64字节对齐）,但默认FFmpeg是STRIDE_ALIGN, 进行8字节对齐。所以lineSize是经过8字节对齐后的值，
         //代表转换后的RGBA数据每一行像素数据所占用的字节数。
         render(outputData, lineSize, av_frame->width, av_frame->height);
+        releaseAvFrame(av_frame);
     }
     /* 处理的一点经验：在栈中开辟了堆内存，不会它在栈里面怎么玩花活
      * 出栈时必须要释放掉。
@@ -82,6 +83,7 @@ void VideoChannel::_play() {
     av_free(outputData);
     releaseAvFrame(av_frame);
     sws_freeContext(sws_context);
+    LOGI("播放结束-------------");
     isPlaying = false;
 }
 
@@ -107,7 +109,7 @@ void VideoChannel::decode() {
     while (isPlaying) {
         /* deQueue 是一个阻塞方法，当pkt_queue空的时候，会阻塞，直到pkt_queue存入新的数据。*/
         LOGW("消费数据，pkt_queue Size：%d", pkt_queue.size());
-        int ret = pkt_queue.deQueue(packet);
+        int ret = pkt_queue.deQueue(packet,true);
         /* 停止播放时候，直接退出 */
         if (!isPlaying) {
             break;
