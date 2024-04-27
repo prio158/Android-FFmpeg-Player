@@ -23,13 +23,13 @@ AudioChannel::~AudioChannel() {
 void *play_audio(void *args) {
     auto audioChannel = static_cast<AudioChannel *>(args);
     audioChannel->_play();
-    return 0;
+    return nullptr;
 }
 
 void *decode_audio(void *args) {
     auto audioChannel = static_cast<AudioChannel *>(args);
     audioChannel->decode();
-    return 0;
+    return nullptr;
 }
 
 
@@ -49,7 +49,6 @@ void AudioChannel::decode() {
     AVPacket *pkt = nullptr;
     int ret;
     while (isPlaying) {
-
         ret = pkt_queue.deQueue(pkt);
 
         if (!isPlaying)
@@ -70,6 +69,7 @@ void AudioChannel::decode() {
         if (ret == 0) {
             frame_queue.enQueue(frame);
         } else if (ret == AVERROR(EAGAIN)) {
+            releaseAvPacket(pkt);
             continue;
         } else {
             LOGE("avcodec_receive_audio_frame error:%s", av_err2str(ret));
@@ -168,13 +168,16 @@ void AudioChannel::_play() {
 
     //获取队列的操作接口
     SLAndroidSimpleBufferQueueItf bufferQueueItf = nullptr;
-    (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_PLAY, &bufferQueueItf);
+    (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_BUFFERQUEUE, &bufferQueueItf);
     //设置回调（启动播放器后执行回调来获取数据并播放）
-    (*bufferQueueItf)->RegisterCallback(bufferQueueItf, audioPlayCallback, this);
+    result =  (*bufferQueueItf)->RegisterCallback(bufferQueueItf, audioPlayCallback, this);
+    if (SL_RESULT_SUCCESS != result) {
+        return;
+    }
 
     //获取播放器状态接口
     SLPlayItf bqPlayerItf = nullptr;
-    (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_BUFFERQUEUE, &bqPlayerItf);
+    (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_PLAY, &bqPlayerItf);
 
     //设置播放器状态
     (*bqPlayerItf)->SetPlayState(bqPlayerItf, SL_PLAYSTATE_PLAYING);

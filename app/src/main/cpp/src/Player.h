@@ -69,7 +69,7 @@ private:
     /* 视频流解码 */
     VideoChannel *videoChannel = nullptr;
     /* 音频流解码 */
-    //AudioChannel *audioChannel = nullptr;
+    AudioChannel *audioChannel = nullptr;
     /* 记录播放状态 */
     bool isPlaying = false;
     /* Window */

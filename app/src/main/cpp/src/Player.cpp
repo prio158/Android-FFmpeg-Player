@@ -87,7 +87,7 @@ void Player::_prepareTaskCallback() {
         }
         auto type = parma->codec_type;
         if (type == AVMEDIA_TYPE_AUDIO) {
-            // audioChannel = new AudioChannel(i, playerHelper, codec_context, stream->time_base);
+             audioChannel = new AudioChannel(i, playerHelper, codec_context, stream->time_base);
         } else if (type == AVMEDIA_TYPE_VIDEO) {
             auto fps = av_q2d(stream->avg_frame_rate);
             videoChannel = new VideoChannel(i, playerHelper, codec_context, stream->time_base, fps);
@@ -115,11 +115,11 @@ void Player::_startTaskCallback() {
             if (packet->stream_index == videoChannel->channelId) {
                 videoChannel->pkt_queue.enQueue(packet,true);
             }
-//            else if (packet->stream_index == audioChannel->channelId) {
-//                audioChannel->pkt_queue.enQueue(packet);
-//            }
+            else if (packet->stream_index == audioChannel->channelId) {
+                audioChannel->pkt_queue.enQueue(packet);
+            }
             else {
-                //LOGE("UNKOWN, packet->stream_index:%d", packet->stream_index);
+                LOGE("UNKOWN, packet->stream_index:%d", packet->stream_index);
                 av_packet_free(&packet);
             }
         } else if (ret == AVERROR_EOF) {
@@ -146,7 +146,7 @@ void Player::_startTaskCallback() {
 void Player::start() {
     isPlaying = true;
     videoChannel->play();
-    //audioChannel->play();
+    audioChannel->play();
     pthread_create(&startTask, 0, startCallback, this);
 }
 
