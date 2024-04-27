@@ -74,9 +74,6 @@ private:
     bool isPlaying = false;
     /* Window */
     ANativeWindow *window{};
-    Mutex size_mutex{};
-    IOSchedule::ptr ioSchedule;
-    Timer::ptr timer = nullptr;
 };
 
 

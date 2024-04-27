@@ -5,8 +5,9 @@
 #include <queue>
 #include <pthread.h>
 #include "Log.h"
+#include "IOSchedule.h"
 
-#define MAX_QUEUE_SIZE (15 * 1024 * 1024)
+#define MAX_QUEUE_SIZE (5 * 1024 * 1024)
 
 template<typename T>
 class SafeQueue {
@@ -18,6 +19,7 @@ public:
     SafeQueue() {
         pthread_mutex_init(&mutex, 0);
         pthread_cond_init(&cond, 0);
+        ioSchedule = IOSchedule::ptr(new IOSchedule);
     }
 
     ~SafeQueue() {
@@ -27,6 +29,17 @@ public:
 
 
     void enQueue(T new_value, bool video = false) {
+
+        if (checkQueueHasEnoughData()) {
+            Mutex::Lock lock(size_mutex);
+            LOGI("TAG 等待 5s 前的，pkt_queue size:%d", size());
+            ioSchedule->addTimer(5000, []() {
+                LOGD("TAG 定时任务");
+            }, false);
+            LOGI("TAG 等待 5s 后的，pkt_queue size:%d", size());
+            LOGI("TAG------------------------------------------------");
+            lock.unlock();
+        }
         pthread_mutex_lock(&mutex);
         if (mEnable) {
             if (video) {
@@ -107,9 +120,7 @@ public:
     }
 
     bool checkQueueHasEnoughData() {
-        LOGD("all size:%d", videoQueSize + audioQueSize);
-        return q.size() >=1000;
-        //return (videoQueSize + audioQueSize) > MAX_QUEUE_SIZE;
+        return q.size() >= 2000;
     }
 
 private:
@@ -121,6 +132,8 @@ private:
     bool mEnable;
     ReleaseHandle releaseHandle;
     SyncHandle syncHandle;
+    IOSchedule::ptr ioSchedule;
+    Mutex size_mutex;
 
 };
 

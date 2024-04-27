@@ -28,7 +28,6 @@ private:
 private:
     int m_epfd = 0;
     int m_tickleFds[2]{};
-    bool isLooping = false;
 };
 
 

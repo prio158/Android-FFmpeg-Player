@@ -19,7 +19,7 @@ void *startCallback(void *args) {
 Player::Player(JavaVM *vm, JNIEnv *env, jobject *jobj) {
     avformat_network_init();
     playerHelper = new PlayerHelper(vm, env, *jobj);
-    ioSchedule = IOSchedule::ptr(new IOSchedule);
+
 }
 
 void Player::setDataSource(const char *path_) {
@@ -87,7 +87,7 @@ void Player::_prepareTaskCallback() {
         }
         auto type = parma->codec_type;
         if (type == AVMEDIA_TYPE_AUDIO) {
-           // audioChannel = new AudioChannel(i, playerHelper, codec_context, stream->time_base);
+            // audioChannel = new AudioChannel(i, playerHelper, codec_context, stream->time_base);
         } else if (type == AVMEDIA_TYPE_VIDEO) {
             auto fps = av_q2d(stream->avg_frame_rate);
             videoChannel = new VideoChannel(i, playerHelper, codec_context, stream->time_base, fps);
@@ -112,17 +112,6 @@ void Player::_startTaskCallback() {
         auto packet = av_packet_alloc();
         ret = av_read_frame(avFormatContext, packet);
         if (ret == 0) {
-            if (videoChannel->pkt_queue.checkQueueHasEnoughData()) {
-                Mutex::Lock lock(size_mutex);
-                LOGD("检查到有足够数据，休眠一会，等待数据消费");
-                timer = ioSchedule->addTimer(2000, []() {}, false);
-                lock.unlock();
-                continue;
-            } else {
-                if (timer != nullptr)
-                    timer->cancel();
-            }
-
             if (packet->stream_index == videoChannel->channelId) {
                 videoChannel->pkt_queue.enQueue(packet);
             }

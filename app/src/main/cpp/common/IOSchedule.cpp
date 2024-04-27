@@ -27,7 +27,7 @@ void IOSchedule::loopEvent() {
         delete[] ptr;
     });
     int ret;
-    while (isLooping) {
+    while (true) {
         uint64_t timeout = 0;
         if (stopping(timeout)) {
             LOGD("timeout invalid");
@@ -43,13 +43,8 @@ void IOSchedule::loopEvent() {
             if (ret < 0 && errno == EINTR) {} else break;
         } while (true);
 
-        ///上面利用epoll_wait进行睡眠，当睡眠timeout结束后，执行定时任务
-        std::vector<std::function<void(void)>> cbs;
-
-        for (const auto &cb: cbs) {
-            cb();
-        }
-        cbs.clear();
+        ///上面利用epoll_wait进行睡眠，当睡眠timeout结束后，执行延迟任务
+        executeTimerTask();
         break;
     }
 }
@@ -62,12 +57,10 @@ bool IOSchedule::stopping(uint64_t &timeout) {
 
 void IOSchedule::onTimerInsertedAtFront() {
     LOGI("通知触发定时任务");
-    isLooping = true;
     loopEvent();
 }
 
 IOSchedule::~IOSchedule() {
-    isLooping = false;
     close(m_epfd);
     close(m_tickleFds[0]);
     close(m_tickleFds[1]);

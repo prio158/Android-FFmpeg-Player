@@ -117,7 +117,6 @@ void VideoChannel::decode() {
             continue;
         }
 
-
         /* 向解码器发送编码数据 */
         /* avcodec_send_packet 内部也有一个循环，不断地解码，然后把数据放入一个队列中
          * 当返回ret = AVERROR(EAGAIN),代表解码器内部队列已经满了，需要读取,但这里没有溢出

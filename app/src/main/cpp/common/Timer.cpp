@@ -6,51 +6,19 @@
 
 
 Timer::Timer(uint64_t ms, std::function<void()> cb, TimerManager *manager, bool recurring)
-        : m_recurring(recurring), m_ms(ms), m_cb(std::move(cb)), m_manager(manager) {
+        : m_recurring(recurring), m_ms(ms), m_cb(std::move(cb)), m_manager(manager) {}
 
-    /* 定期器的启动时间　＋　周期*/
-    m_next = GetCurrentMSTime() + m_ms;
-}
-
-Timer::Timer(uint64_t ms) : m_ms(ms) {
-
-}
-
+Timer::Timer(uint64_t ms) : m_ms(ms) {}
 
 bool Timer::cancel() {
     TimerManager::RWMutexType::WriteLock lock(m_manager->m_mutex);
     if (m_cb) {
         m_cb = nullptr;
         auto it = m_manager->m_timers.find(shared_from_this());
-        m_manager->m_timers.erase(it);
+        if (it != m_manager->m_timers.end())
+            m_manager->m_timers.erase(it);
         return true;
     }
-    return false;
-}
-
-bool Timer::refresh() {
-    TimerManager::RWMutexType::WriteLock lock(m_manager->m_mutex);
-    if (!m_cb) return false;
-    auto it = m_manager->m_timers.find(shared_from_this());
-    if (it == m_manager->m_timers.end()) return false;
-    m_manager->m_timers.erase(it);
-    m_next = GetCurrentMSTime() + m_ms;
-    m_manager->m_timers.insert(shared_from_this());
-    return true;
-}
-
-bool Timer::reset(uint64_t ms, bool from_now) {
-    if (ms == m_ms && !from_now) return true;
-    TimerManager::RWMutexType::WriteLock lock(m_manager->m_mutex);
-    auto it = m_manager->m_timers.find(shared_from_this());
-    if (it == m_manager->m_timers.end()) return false;
-    m_manager->m_timers.erase(it);
-    uint64_t start = 0;
-    if (from_now) start = GetCurrentMSTime();
-    else start = m_next - m_ms;
-    m_ms = ms;
-    m_next = start + m_ms;
-    m_manager->addTimer(shared_from_this());
     return false;
 }
 
@@ -80,43 +48,23 @@ uint64_t TimerManager::getTimeOut() const {
 
 void TimerManager::addTimer(const Timer::ptr &timer) {
     auto it = m_timers.insert(timer).first;
-    ///插入后就立即检查一下:如果插入的定时器排在最前面,代表它的ms(执行周期)处于最小
-    bool at_front = (it == m_timers.begin()) && !m_tickled;
+    bool at_front = (it == m_timers.begin());
     if (at_front) {
-        m_tickled = true;
-        /* 新插入timer的ms(执行周期)最小,通知IOSchedule重新设置epoll_wait的超时周期*/
         onTimerInsertedAtFront();
     }
 }
 
-void TimerManager::executeTimerTask(uint64_t now_ms) {
+void TimerManager::executeTimerTask() {
     for (const auto &timer: m_timers) {
-        if (timer->m_cb != nullptr && isExecute(timer)) {
+        if (timer->m_cb != nullptr) {
             timer->m_cb();
         }
     }
+    m_timers.clear();
 }
-
-bool TimerManager::isExecute(const Timer::ptr &timer) {
-    auto currentTime = GetCurrentMSTime();
-    auto timerExecuteTime = timer->m_next;
-    return timerExecuteTime >= currentTime;
-}
-
 
 bool TimerManager::hasTimer() {
     RWMutexType::ReadLock lock(m_mutex);
     return !m_timers.empty();
-}
-
-TimerManager::TimerManager() {
-    m_preTime = GetCurrentMSTime();
-}
-
-TimerManager::~TimerManager() {
-}
-
-uint64_t TimerManager::getNextTimer() {
-    return 0;
 }
 
