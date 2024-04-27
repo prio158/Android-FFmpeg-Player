@@ -46,6 +46,8 @@ public:
 
     void stop();
 
+    void enable();
+
 private:
     void _prepareTaskCallback();
 

@@ -36,6 +36,8 @@ public:
 
     void decode() override;
 
+    void enable() override;
+
 
 private:
     void _play();

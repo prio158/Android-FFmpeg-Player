@@ -39,11 +39,13 @@ public:
     /**
      * @brief 解码+播放
      * */
-    virtual void play();
+    virtual void play() override;
 
-    virtual void stop();
+    virtual void stop() override;
 
-    virtual void decode();
+    virtual void decode() override;
+
+    virtual void enable() override;
 
 private:
     void _play();

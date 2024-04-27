@@ -18,8 +18,8 @@ class MainActivity : AppCompatActivity() {
 	private lateinit var binding: ActivityMainBinding
 	private lateinit var player: Player
 	private var isRefuse: Boolean = false
-
 	private var surface: Surface? = null
+	private var isPause = false
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -93,16 +93,20 @@ class MainActivity : AppCompatActivity() {
 			player.prepare()
 		}
 
-		binding.buttonStop.setOnClickListener {
-			player.stop()
+		binding.buttonPause.setOnClickListener {
+			isPause = !isPause
+			if (isPause)
+				player.pause()
+			else
+				player.continuePlay()
+			binding.buttonPause.text = if (!isPause) "Pasue" else "Continue"
 		}
-
 	}
 
 	private fun verifyStoragePermissions() {
 		if (!Environment.isExternalStorageManager() && !isRefuse) {
 			val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-			intent.setData(Uri.parse("package:$packageName"));
+			intent.data = Uri.parse("package:$packageName");
 			ActivityCompat.startActivityForResult(this, intent, 1024, Bundle())
 		}
 	}

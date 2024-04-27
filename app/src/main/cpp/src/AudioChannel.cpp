@@ -42,14 +42,15 @@ void AudioChannel::play() {
 }
 
 void AudioChannel::stop() {
-
+    isPlaying = false;
+    setEnable(false);
 }
 
 void AudioChannel::decode() {
     AVPacket *pkt = nullptr;
     int ret;
     while (isPlaying) {
-        ret = pkt_queue.deQueue(pkt, false,true);
+        ret = pkt_queue.deQueue(pkt, false, true);
 
         if (!isPlaying)
             break;
@@ -67,7 +68,7 @@ void AudioChannel::decode() {
         auto frame = av_frame_alloc();
         ret = avcodec_receive_frame(avCodecContext, frame);
         if (ret == 0) {
-            frame_queue.enQueue(frame,false);
+            frame_queue.enQueue(frame, false);
         } else if (ret == AVERROR(EAGAIN)) {
             releaseAvPacket(pkt);
             continue;
@@ -171,7 +172,7 @@ void AudioChannel::_play() {
     SLAndroidSimpleBufferQueueItf bufferQueueItf = nullptr;
     (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_BUFFERQUEUE, &bufferQueueItf);
     //设置回调（启动播放器后执行回调来获取数据并播放）
-    result =  (*bufferQueueItf)->RegisterCallback(bufferQueueItf, audioPlayCallback, this);
+    result = (*bufferQueueItf)->RegisterCallback(bufferQueueItf, audioPlayCallback, this);
     if (SL_RESULT_SUCCESS != result) {
         return;
     }
@@ -193,7 +194,7 @@ int AudioChannel::_getData() {
     int ret;
     int data_size = 0;
     while (isPlaying) {
-        ret = frame_queue.deQueue(avFrame, false,false);
+        ret = frame_queue.deQueue(avFrame, false, false);
         if (!isPlaying)
             break;
 
@@ -219,6 +220,11 @@ void AudioChannel::_initAudioResample() {
                                     0, nullptr);
 
     swr_init(swrContext);
+}
+
+void AudioChannel::enable() {
+    isPlaying = true;
+    setEnable(true);
 }
 
 

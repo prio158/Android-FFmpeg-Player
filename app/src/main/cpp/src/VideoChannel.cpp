@@ -80,7 +80,7 @@ void VideoChannel::_play() {
     /* 处理的一点经验：在栈中开辟了堆内存，不会它在栈里面怎么玩花活
      * 出栈时必须要释放掉。
      * */
-    av_free(outputData);
+    //av_free(&outputData[0]);
     releaseAvFrame(av_frame);
     sws_freeContext(sws_context);
     LOGI("播放结束-------------");
@@ -101,6 +101,11 @@ void VideoChannel::play() {
 void VideoChannel::stop() {
     isPlaying = false;
     setEnable(false);
+}
+
+void VideoChannel::enable() {
+    isPlaying = true;
+    setEnable(true);
 }
 
 void VideoChannel::decode() {

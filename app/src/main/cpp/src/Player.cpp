@@ -19,7 +19,6 @@ void *startCallback(void *args) {
 Player::Player(JavaVM *vm, JNIEnv *env, jobject *jobj) {
     avformat_network_init();
     playerHelper = new PlayerHelper(vm, env, *jobj);
-
 }
 
 void Player::setDataSource(const char *path_) {
@@ -113,9 +112,9 @@ void Player::_startTaskCallback() {
         ret = av_read_frame(avFormatContext, packet);
         if (ret == 0) {
             if (packet->stream_index == videoChannel->channelId) {
-                videoChannel->pkt_queue.enQueue(packet, true,true);
+                videoChannel->pkt_queue.enQueue(packet, true, true);
             } else if (packet->stream_index == audioChannel->channelId) {
-                audioChannel->pkt_queue.enQueue(packet,false,true);
+                audioChannel->pkt_queue.enQueue(packet, false, true);
             } else {
                 LOGE("UNKOWN, packet->stream_index:%d", packet->stream_index);
                 av_packet_free(&packet);
@@ -169,7 +168,19 @@ Player::~Player() {
 void Player::stop() {
     LOGI("Player::stop()");
     isPlaying = false;
-    videoChannel->stop();
+    if (videoChannel)
+        videoChannel->stop();
+    if (audioChannel)
+        audioChannel->stop();
+}
+
+void Player::enable() {
+    LOGI("Player::enable()");
+    isPlaying = true;
+    if (videoChannel)
+        videoChannel->enable();
+    if (audioChannel)
+        audioChannel->enable();
 }
 
 

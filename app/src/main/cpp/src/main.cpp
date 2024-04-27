@@ -57,7 +57,7 @@ Java_com_example_player_common_Player_setSurface(JNIEnv *env, jobject thiz, jlon
                                                  jobject surface) {
     auto nativePlayer = reinterpret_cast<Player *>(native_ptr);
     auto window = ANativeWindow_fromSurface(env, surface);
-    LOGD("NativePlayer::setWindow XXX window:%p",window);
+    LOGD("NativePlayer::setWindow XXX window:%p", window);
     nativePlayer->setNativeWindow(window);
 
 }
@@ -74,4 +74,14 @@ Java_com_example_player_common_Player_nativeStop(JNIEnv *env, jobject thiz, jlon
     auto nativePlayer = reinterpret_cast<Player *>(native_ptr);
     LOGD("JNI nativePlayer->stop() Call");
     nativePlayer->stop();
+}
+
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_player_common_Player_nativeEnable(JNIEnv *env, jobject thiz,
+                                                   jlong native_ptr) {
+    auto nativePlayer = reinterpret_cast<Player *>(native_ptr);
+    LOGD("JNI nativePlayer->enable() Call");
+    nativePlayer->enable();
 }

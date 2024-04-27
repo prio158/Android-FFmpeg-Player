@@ -40,6 +40,8 @@ public:
 
     virtual void decode() = 0;
 
+    virtual void enable() = 0;
+
     void setEnable(bool enable) {
         pkt_queue.setEnable(enable);
         frame_queue.setEnable(enable);
