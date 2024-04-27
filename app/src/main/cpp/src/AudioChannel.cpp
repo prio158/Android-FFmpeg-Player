@@ -73,6 +73,7 @@ void AudioChannel::decode() {
             continue;
         } else {
             LOGE("avcodec_receive_audio_frame error:%s", av_err2str(ret));
+            releaseAvPacket(pkt);
             break;
         }
     }
@@ -204,17 +205,18 @@ int AudioChannel::_getData() {
                               avFrame->nb_samples);
 
         data_size = nbs * out_channels * per_samples_size;
+        releaseAvFrame(avFrame);
         break;
     }
     return data_size;
 }
 
 void AudioChannel::_initAudioResample() {
-    swrContext = swr_alloc_set_opts(0, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, 44100,
+    swrContext = swr_alloc_set_opts(nullptr, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, 44100,
                                     avCodecContext->channel_layout,
                                     avCodecContext->sample_fmt,
                                     avCodecContext->sample_rate,
-                                    0, 0);
+                                    0, nullptr);
 
     swr_init(swrContext);
 }
