@@ -89,6 +89,12 @@ void Player::_prepareTaskCallback() {
             audioChannel = new AudioChannel(i, playerHelper, codec_context, stream->time_base);
         } else if (type == AVMEDIA_TYPE_VIDEO) {
             auto fps = av_q2d(stream->avg_frame_rate);
+            if (isnan(fps) || fps == 0) {
+                fps = av_q2d(stream->r_frame_rate);
+            }
+            if (isnan(fps) || fps == 0) {
+                fps = av_q2d(av_guess_frame_rate(avFormatContext, stream, nullptr));
+            }
             videoChannel = new VideoChannel(i, playerHelper, codec_context, stream->time_base, fps);
         }
     }

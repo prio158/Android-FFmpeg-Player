@@ -4,6 +4,8 @@
 
 #include "AudioChannel.h"
 
+double AudioChannel::audioClock = 0;
+
 AudioChannel::AudioChannel(int channelId, PlayerHelper *helper, AVCodecContext *avCodecContext,
                            const AVRational &base) : BaseChannel(channelId, helper, avCodecContext,
                                                                  base) {
@@ -16,8 +18,9 @@ AudioChannel::AudioChannel(int channelId, PlayerHelper *helper, AVCodecContext *
 }
 
 AudioChannel::~AudioChannel() {
-
-
+    delete[] buffer;
+    if (swrContext)
+        swr_free(&swrContext);
 }
 
 void *play_audio(void *args) {
@@ -82,7 +85,6 @@ void AudioChannel::decode() {
 }
 
 void audioPlayCallback(SLAndroidSimpleBufferQueueItf caller, void *pContext) {
-    LOGI("Audio Play Callback Execute");
     auto audioChannel = static_cast<AudioChannel *>(pContext);
     int size = audioChannel->_getData();
     if (size > 0) {
@@ -206,14 +208,20 @@ int AudioChannel::_getData() {
                               avFrame->nb_samples);
 
         data_size = nbs * out_channels * per_samples_size;
-        releaseAvFrame(avFrame);
+
+        /// 计算出的clock就代表音频播放的进度时间
+        audioClock = avFrame->pts * av_q2d(time_base);
         break;
     }
+    releaseAvFrame(avFrame);
     return data_size;
 }
 
+
 void AudioChannel::_initAudioResample() {
-    swrContext = swr_alloc_set_opts(nullptr, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, 44100,
+    swrContext = swr_alloc_set_opts(nullptr, AV_CH_LAYOUT_STEREO,
+                                    AV_SAMPLE_FMT_S16,
+                                    44100,
                                     avCodecContext->channel_layout,
                                     avCodecContext->sample_fmt,
                                     avCodecContext->sample_rate,

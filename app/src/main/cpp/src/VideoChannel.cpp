@@ -45,21 +45,40 @@ void VideoChannel::_play() {
     auto sws_context = sws_getContext(width, height, pixelFormat,
                                       width, height, outputPixelFormat,
                                       SWS_FAST_BILINEAR,
-                                      0, 0, 0);
+                                      nullptr, nullptr, nullptr);
+
+    double frame_rate = 1.0 / fps;
 
     while (isPlaying) {
 
-        /* 阻塞方法，当队列中没有数据的时候，会阻塞在这里await，只有在队列有数据的时候，会解除阻塞*/
+        /** 阻塞方法，当队列中没有数据的时候，会阻塞在这里await，只有在队列有数据的时候，会解除阻塞*/
         ret = frame_queue.deQueue(av_frame, true, false);
 
-        /* 停止播放时候，直接退出 */
+        /** 停止播放时候，直接退出 */
         if (!isPlaying)
             break;
 
-        /*ret==0代表没有数据*/
+        /**ret==0代表没有数据*/
         if (!ret)
             continue;
-        /* 因为ANativeWindow不支持显示YUV格式的数据，所以需要将FFmpeg解码出来YUV数据进行转换
+
+        ///控制视频播放速度跟随 FPS
+        double extra_delay = av_frame->repeat_pict / (2 * fps);
+        double delay = extra_delay + frame_rate;
+        av_usleep(delay * 1000000);
+
+        auto audio_clock = AudioChannel::GetClock();
+        auto video_clock = av_frame->best_effort_timestamp * av_q2d(time_base);
+        //av_frame->pts * av_q2d(time_base);
+        double diff = video_clock - audio_clock;
+        if (diff > 0) {
+
+        } else {
+
+        }
+
+
+        /** 因为ANativeWindow不支持显示YUV格式的数据，所以需要将FFmpeg解码出来YUV数据进行转换
          * av_frame->data: 是一个指针数组：uint8_t *data[AV_NUM_DATA_POINTERS], 数组里面存的是uint8_t*
          *
          * linesize:表示图像每一行的字节数，而不是图像的大小
@@ -76,6 +95,7 @@ void VideoChannel::_play() {
         //代表转换后的RGBA数据每一行像素数据所占用的字节数。
         render(outputData, lineSize, av_frame->width, av_frame->height);
         releaseAvFrame(av_frame);
+
     }
     /* 处理的一点经验：在栈中开辟了堆内存，不会它在栈里面怎么玩花活
      * 出栈时必须要释放掉。

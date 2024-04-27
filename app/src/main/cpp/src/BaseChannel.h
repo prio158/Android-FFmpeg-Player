@@ -54,7 +54,6 @@ public:
         }
     }
 
-
     static void releaseAvPacket(AVPacket *&packet) {
         if (packet) {
             av_packet_free(&packet);
@@ -69,7 +68,6 @@ public:
     bool hasFrameData() {
         return !frame_queue.empty();
     }
-
 
 public:
     int channelId;

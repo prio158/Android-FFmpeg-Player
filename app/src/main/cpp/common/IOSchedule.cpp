@@ -43,7 +43,7 @@ void IOSchedule::loopEvent() {
             if (ret < 0 && errno == EINTR) {} else break;
         } while (true);
 
-        ///上面利用epoll_wait进行睡眠，当睡眠timeout结束后，执行延迟任务
+        ///上面利用epoll_wait进行阻塞，当阻塞timeout结束后，执行延迟任务
         executeTimerTask();
         break;
     }

@@ -42,7 +42,6 @@ class Player {
 
 	fun continuePlay() {
 		nativeEnable(nativePlayer)
-
 	}
 
 	fun stop() {

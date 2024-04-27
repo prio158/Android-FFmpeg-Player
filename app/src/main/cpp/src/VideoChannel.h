@@ -9,11 +9,10 @@
 #include "BaseChannel.h"
 #include "PlayerHelper.h"
 #include "Mutex.h"
-#include "Timer.h"
 #include "IOSchedule.h"
 #include <threads.h>
 #include <android/native_window_jni.h>
-#include <functional>
+#include "AudioChannel.h"
 
 extern "C" {
 #include "libavcodec/avcodec.h"
@@ -21,6 +20,7 @@ extern "C" {
 #include "libavutil/imgutils.h"
 #include "libavutil/rational.h"
 #include <sys/epoll.h>
+#include "libavutil/time.h"
 }
 
 class VideoChannel : public BaseChannel {

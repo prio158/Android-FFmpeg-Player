@@ -38,6 +38,10 @@ public:
 
     void enable() override;
 
+    static double GetClock() {
+        return audioClock;
+    }
+
 
 private:
     void _play();
@@ -57,8 +61,7 @@ private:
     int out_channels;
     int per_samples_size;
     int sample_size;
-
-
+    static double audioClock;
 };
 
 
