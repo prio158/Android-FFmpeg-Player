@@ -23,6 +23,9 @@ extern "C" {
 #include "libavutil/time.h"
 }
 
+#define AV_SYNC_THRESHOLD_MIN 0.04
+#define AV_SYNC_THRESHOLD_MAX 0.1
+
 class VideoChannel : public BaseChannel {
 
     friend void *play_video(void *args);

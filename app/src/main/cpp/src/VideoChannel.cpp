@@ -65,20 +65,32 @@ void VideoChannel::_play() {
         ///控制视频播放速度跟随 FPS
         double extra_delay = av_frame->repeat_pict / (2 * fps);
         double delay = extra_delay + frame_rate;
-        av_usleep(delay * 1000000);
-
         auto audio_clock = AudioChannel::GetClock();
         auto video_clock = av_frame->best_effort_timestamp * av_q2d(time_base);
         //av_frame->pts * av_q2d(time_base);
         double diff = video_clock - audio_clock;
-        if (diff > 0) {
-
-        } else {
-
+        /**
+         * 根据每秒视频播放的帧数（fps），确定一个延迟范围
+         * delay < 0.04 ===> 0.04 (1/fps)
+         * delay > 0.1 ===> 0.1
+         * 0.04 < delay < 0.1 ===> delay
+         * */
+        double sync = FFMAX(AV_SYNC_THRESHOLD_MIN, FFMIN(AV_SYNC_THRESHOLD_MAX, delay));
+        if (diff <= -sync) {
+            /// diff<0 代表视频落后，diff <= -0.05代表落后比较多，就需要进行同步
+            /// 通过减少 delay ，让视频追赶上音频
+            /// diff是负数，delay + diff 就是减少 delay 时间，但是最小为 0
+            delay = FFMAX(0, delay + diff);
+        } else if (diff > sync) {
+            /// diff > sync 代表视频快了很多，就需要 delay 久一点，等待音频
+            delay = delay + diff;
         }
+        LOGD("SYNC audio_clock:%f", audio_clock);
 
+        av_usleep(delay * 1000000);
 
-        /** 因为ANativeWindow不支持显示YUV格式的数据，所以需要将FFmpeg解码出来YUV数据进行转换
+        /**
+         * 因为ANativeWindow不支持显示YUV格式的数据，所以需要将FFmpeg解码出来YUV数据进行转换
          * av_frame->data: 是一个指针数组：uint8_t *data[AV_NUM_DATA_POINTERS], 数组里面存的是uint8_t*
          *
          * linesize:表示图像每一行的字节数，而不是图像的大小
