@@ -31,9 +31,10 @@ public:
     void enQueue(T new_value, bool video = false, bool isPacket = false) {
         if (checkQueueHasEnoughData()) {
             Mutex::Lock lock(size_mutex);
-            ioSchedule->addTimer(10, []() {
+            ioSchedule->addTimerTask(Timer::ptr(new Timer(10000, []() {
                 LOGD("TAG1 定时任务");
-            }, false);
+            })));
+
             if (video && isPacket) {
                 LOGD("TAG1Video PacketQueueSize：%d", q.size());
             } else if (!video && isPacket) {

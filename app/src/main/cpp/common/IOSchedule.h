@@ -5,11 +5,12 @@
 #ifndef PLAYER_IOSCHEDULE_H
 #define PLAYER_IOSCHEDULE_H
 
-#include "Timer.h"
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <memory>
+#include "Timer.h"
 
-class IOSchedule : public TimerManager {
+class IOSchedule {
 
 public:
     using ptr = std::shared_ptr<IOSchedule>;
@@ -18,14 +19,16 @@ public:
 
     ~IOSchedule();
 
-    void onTimerInsertedAtFront() override;
+public:
+    void addTimerTask(const Timer::ptr &timer);
 
-private:
     void loopEvent();
 
-    bool stopping(uint64_t &timeout);
+    void stopLoop();
 
 private:
+    std::vector<Timer::ptr> timers {};
+    bool isLooping = false;
     int m_epfd = 0;
     int m_tickleFds[2]{};
 };

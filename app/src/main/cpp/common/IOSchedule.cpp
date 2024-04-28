@@ -28,35 +28,23 @@ void IOSchedule::loopEvent() {
     });
     int ret;
     while (true) {
-        uint64_t timeout = 0;
-        if (stopping(timeout)) {
-            LOGD("timeout invalid");
-            break;
-        }
-
+        auto timer = timers.back();
+        timers.pop_back();
+        auto task = timer->getTask();
         do {
-            static const int MAX_TIME_OUT = 3000;
-            if (timeout != ~0ull) {
-                timeout = timeout > MAX_TIME_OUT ? MAX_TIME_OUT : timeout;
-            } else timeout = MAX_TIME_OUT;
-            ret = epoll_wait(m_epfd, shared_events.get(), 64, timeout);
+            ret = epoll_wait(m_epfd, shared_events.get(), 64, (int) timer->getTimeout());
             if (ret < 0 && errno == EINTR) {} else break;
         } while (true);
 
         ///上面利用epoll_wait进行阻塞，当阻塞timeout结束后，执行延迟任务
-        executeTimerTask();
+        if (task)
+            task();
         break;
     }
 }
 
-bool IOSchedule::stopping(uint64_t &timeout) {
-    timeout = getTimeOut();
-    return timeout == ~0ull;
-}
-
-
-void IOSchedule::onTimerInsertedAtFront() {
-    loopEvent();
+void IOSchedule::stopLoop() {
+    isLooping = false;
 }
 
 IOSchedule::~IOSchedule() {
@@ -64,6 +52,12 @@ IOSchedule::~IOSchedule() {
     close(m_tickleFds[0]);
     close(m_tickleFds[1]);
 }
+
+void IOSchedule::addTimerTask(const Timer::ptr &timer) {
+    timers.emplace_back(timer);
+    loopEvent();
+}
+
 
 
 
