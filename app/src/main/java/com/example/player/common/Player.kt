@@ -19,7 +19,7 @@ class Player {
 		}
 	}
 
-	private val nativePlayer = nativePlayerInit()
+	private var nativePlayer = nativePlayerInit()
 	private var onErrorCallback: Callback = {}
 	private var onProcessCallback: Callback = {}
 	private var onPrepareCallback: EmptyCallback = {}
@@ -34,14 +34,6 @@ class Player {
 
 	fun start() {
 		nativeStart(nativePlayer)
-	}
-
-	fun pause() {
-		nativeStop(nativePlayer)
-	}
-
-	fun continuePlay() {
-		nativeEnable(nativePlayer)
 	}
 
 	fun stop() {

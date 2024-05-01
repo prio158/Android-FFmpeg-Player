@@ -99,7 +99,7 @@ void Player::_prepareTaskCallback() {
         }
     }
 
-    /* 没有视频流 */
+    /** 没有视频流 */
     if (videoChannel == nullptr && audioChannel == nullptr) {
         LOGE("[path:%s] have no media data", m_path);
         playerHelper->onError(FFMPEG_NO_MEDIA_DATA, THREAD_CHILD);
@@ -107,7 +107,7 @@ void Player::_prepareTaskCallback() {
     }
 
     LOGI("Native Player Prepare Finish");
-    /* 告诉Java层，媒体信息准备完毕 */
+    /** 告诉Java层，媒体信息准备完毕 */
     playerHelper->onPrepare(THREAD_CHILD);
 }
 
@@ -131,8 +131,6 @@ void Player::_startTaskCallback() {
             // 所以读取和播放不是同步的,读完了，数据都在队列里面，还没有播放完
             av_packet_free(&packet);
             if (!videoChannel->hasPacketData() && !videoChannel->hasFrameData()) {
-                //播放完毕,才能break
-                LOGD("Player READ, AVERROR_EOF");
                 break;
             }
             LOGE("FILE READ EOF");
@@ -189,17 +187,21 @@ void Player::enable() {
 
 void Player::release() {
     if (videoChannel) {
-        videoChannel->stop();
+        delete videoChannel;
         videoChannel = nullptr;
     }
     if (audioChannel) {
-        audioChannel->stop();
+        delete audioChannel;
         audioChannel = nullptr;
     }
     if (avFormatContext) {
         avformat_close_input(&avFormatContext);
         avformat_free_context(avFormatContext);
         avFormatContext = nullptr;
+    }
+    if (window) {
+        ANativeWindow_release(window);
+        window = nullptr;
     }
 }
 

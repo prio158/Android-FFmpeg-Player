@@ -136,9 +136,6 @@ public:
 
     bool checkQueueHasEnoughData() {
         return q.size() >= 1000;
-//        LOGD("audioQueSize:%d",audioQueSize);
-//        LOGD("videoQueSize:%d",videoQueSize);
-//        return (audioQueSize + videoQueSize) >= MAX_QUEUE_SIZE;
     }
 
 private:

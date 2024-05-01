@@ -50,13 +50,18 @@ private:
 
     void _initAudioResample();
 
+    void _release();
+
     void _releaseOpenSL();
 
 private:
     bool isPlaying = false;
     Mutex mutex{};
     pthread_t audioDecodeTask{}, audioPlayTask{};
+    SLPlayItf bqPlayerItf = nullptr;
     SLEngineItf engineInterface = nullptr;
+    SLObjectItf bqPlayerObject = nullptr;    //播放器对象
+    SLAndroidSimpleBufferQueueItf bufferQueueItf = nullptr; //队列对象
     SwrContext *swrContext = nullptr;
     uint8_t *buffer;
     int sample_rate;

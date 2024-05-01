@@ -18,9 +18,7 @@ AudioChannel::AudioChannel(int channelId, PlayerHelper *helper, AVCodecContext *
 }
 
 AudioChannel::~AudioChannel() {
-    delete[] buffer;
-    if (swrContext)
-        swr_free(&swrContext);
+    //_release();
 }
 
 void *play_audio(void *args) {
@@ -47,19 +45,37 @@ void AudioChannel::play() {
 void AudioChannel::stop() {
     isPlaying = false;
     setEnable(false);
-    helper = nullptr;
     pthread_join(audioDecodeTask, nullptr);
     pthread_join(audioPlayTask, nullptr);
+    _release();
+}
+
+void AudioChannel::_release() {
+    isPlaying = false;
+    setEnable(false);
+    helper = nullptr;
     if (swrContext) {
         swr_free(&swrContext);
         swrContext = nullptr;
     }
     _releaseOpenSL();
+    pkt_queue.clear();
+    frame_queue.clear();
+    delete[] buffer;
 }
 
 void AudioChannel::_releaseOpenSL() {
-    
-
+    /** 设置停止播放状态*/
+    (*bqPlayerItf)->SetPlayState(bqPlayerItf, SL_PLAYSTATE_STOPPED);
+    /** 注销回调*/
+    (*bufferQueueItf)->RegisterCallback(bufferQueueItf, nullptr, nullptr);
+    /** 销毁播放器*/
+    (*bqPlayerObject)->Destroy(bqPlayerObject);
+    /** 释放音频缓冲buffer*/
+    if (buffer) {
+        delete buffer;
+        buffer = nullptr;
+    }
 }
 
 void AudioChannel::decode() {
@@ -165,8 +181,6 @@ void AudioChannel::_play() {
     //设置混音器
     SLDataLocator_OutputMix outputMix = {SL_DATALOCATOR_OUTPUTMIX, outputMixObject};
     SLDataSink audioSnk = {&outputMix, NULL};
-    //播放器对象
-    SLObjectItf bqPlayerObject = NULL;
 
     //Object 可能会存在一个或者多个 Interface，官方为每一种 Object 都定义了一系列的 Interface；
     //Object 对象提供了各种操作，如果希望使用该对象支持的功能函数，则必须通过其 GetInterface 函数拿到
@@ -184,7 +198,7 @@ void AudioChannel::_play() {
     (*bqPlayerObject)->Realize(bqPlayerObject, SL_BOOLEAN_FALSE);
 
     //获取队列的操作接口
-    SLAndroidSimpleBufferQueueItf bufferQueueItf = nullptr;
+
     (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_BUFFERQUEUE, &bufferQueueItf);
     //设置回调（启动播放器后执行回调来获取数据并播放）
     result = (*bufferQueueItf)->RegisterCallback(bufferQueueItf, audioPlayCallback, this);
@@ -193,7 +207,6 @@ void AudioChannel::_play() {
     }
 
     //获取播放器状态接口
-    SLPlayItf bqPlayerItf = nullptr;
     (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_PLAY, &bqPlayerItf);
 
     //设置播放器状态

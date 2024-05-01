@@ -48,17 +48,11 @@ public:
     }
 
     static void releaseAvFrame(AVFrame *&frame) {
-        if (frame) {
-            av_frame_unref(frame);
-            frame = 0;
-        }
+        av_frame_free(&frame);
     }
 
     static void releaseAvPacket(AVPacket *&packet) {
-        if (packet) {
-            av_packet_unref(packet);
-            packet = 0;
-        }
+        av_packet_free(&packet);
     }
 
     bool hasPacketData() {

@@ -19,7 +19,6 @@ class MainActivity : AppCompatActivity() {
 	private lateinit var player: Player
 	private var isRefuse: Boolean = false
 	private var surface: Surface? = null
-	private var isPause = false
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -91,15 +90,14 @@ class MainActivity : AppCompatActivity() {
 
 		binding.button.setOnClickListener {
 			player.prepare()
+			binding.button.isEnabled = false
+			binding.buttonPause.isEnabled = true
 		}
 
 		binding.buttonPause.setOnClickListener {
-			isPause = !isPause
-			if (isPause)
-				player.pause()
-			else
-				player.continuePlay()
-			binding.buttonPause.text = if (!isPause) "Pasue" else "Continue"
+			player.stop()
+			binding.buttonPause.isEnabled = false
+			binding.button.isEnabled = true
 		}
 	}
 

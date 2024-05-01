@@ -105,15 +105,14 @@ void VideoChannel::_play() {
         //sws_scale输出的rgba数据的lineSize：每一行像素数据所占用的字节数。（这个值是经过FFmpeg内部的字节对齐逻辑而来的）
         //比如: HAVE_SIMD_ALIGN_64（64字节对齐）,但默认FFmpeg是STRIDE_ALIGN, 进行8字节对齐。所以lineSize是经过8字节对齐后的值，
         //代表转换后的RGBA数据每一行像素数据所占用的字节数。
-        render(outputData, lineSize, av_frame->width, av_frame->height);
+        _render(outputData, lineSize, av_frame->width, av_frame->height);
         releaseAvFrame(av_frame);
-
     }
     /**
      * 处理的一点经验：在栈中开辟了堆内存，不会它在栈里面怎么玩花活
      * 出栈时必须要释放掉。
      * */
-    //av_free(&outputData[0]);
+    av_freep(&outputData[0]);
     releaseAvFrame(av_frame);
     sws_freeContext(sws_context);
     isPlaying = false;
@@ -133,13 +132,9 @@ void VideoChannel::play() {
 void VideoChannel::stop() {
     isPlaying = false;
     setEnable(false);
-    helper = nullptr;
-    pthread_join(videoDecodeTask, nullptr);
     pthread_join(videoPlayTask, nullptr);
-    if (window) {
-        ANativeWindow_release(window);
-        window = nullptr;
-    }
+    pthread_join(videoDecodeTask, nullptr);
+    _release();
 }
 
 void VideoChannel::enable() {
@@ -196,7 +191,7 @@ void VideoChannel::setWindow(ANativeWindow *window_) {
     window = window_;
 }
 
-void VideoChannel::render(uint8_t **data, int *linesize, int w, int h) {
+void VideoChannel::_render(uint8_t **data, int *linesize, int w, int h) {
     Mutex::Lock lock(window_mutex);
     if (nullptr == window) {
         lock.unlock();
@@ -235,7 +230,15 @@ void VideoChannel::render(uint8_t **data, int *linesize, int w, int h) {
 }
 
 VideoChannel::~VideoChannel() {
+    _release();
+}
 
+void VideoChannel::_release() {
+    isPlaying = false;
+    setEnable(false);
+    helper = nullptr;
+    pkt_queue.clear();
+    frame_queue.clear();
 }
 
 

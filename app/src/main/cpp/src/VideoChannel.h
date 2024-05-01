@@ -51,9 +51,12 @@ public:
     virtual void enable() override;
 
 private:
+
+    void _release();
+
     void _play();
 
-    void render(uint8_t **data, int *linesize, int w, int h);
+    void _render(uint8_t **data, int *linesize, int w, int h);
 
 private:
     int fps = 0;

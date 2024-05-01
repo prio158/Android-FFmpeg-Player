@@ -51,6 +51,7 @@ Java_com_example_player_common_Player_nativeStart(JNIEnv *env, jobject thiz, jlo
     auto nativePlayer = reinterpret_cast<Player *>(native_ptr);
     nativePlayer->start();
 }
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_example_player_common_Player_setSurface(JNIEnv *env, jobject thiz, jlong native_ptr,
@@ -74,7 +75,6 @@ Java_com_example_player_common_Player_nativeStop(JNIEnv *env, jobject thiz, jlon
     auto nativePlayer = reinterpret_cast<Player *>(native_ptr);
     LOGD("JNI nativePlayer->stop() Call");
     nativePlayer->stop();
-    delete nativePlayer;
 }
 
 
