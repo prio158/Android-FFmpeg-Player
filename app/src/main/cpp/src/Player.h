@@ -53,6 +53,8 @@ private:
 
     void _startTaskCallback();
 
+    void release();
+
 private:
     /* 媒体文件路径或直播地址*/
     const char *m_path = nullptr;

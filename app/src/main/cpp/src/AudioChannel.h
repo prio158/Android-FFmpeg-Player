@@ -50,6 +50,8 @@ private:
 
     void _initAudioResample();
 
+    void _releaseOpenSL();
+
 private:
     bool isPlaying = false;
     Mutex mutex{};

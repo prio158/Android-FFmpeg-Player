@@ -47,6 +47,19 @@ void AudioChannel::play() {
 void AudioChannel::stop() {
     isPlaying = false;
     setEnable(false);
+    helper = nullptr;
+    pthread_join(audioDecodeTask, nullptr);
+    pthread_join(audioPlayTask, nullptr);
+    if (swrContext) {
+        swr_free(&swrContext);
+        swrContext = nullptr;
+    }
+    _releaseOpenSL();
+}
+
+void AudioChannel::_releaseOpenSL() {
+    
+
 }
 
 void AudioChannel::decode() {

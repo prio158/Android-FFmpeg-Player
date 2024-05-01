@@ -67,11 +67,10 @@ void VideoChannel::_play() {
         double delay = extra_delay + frame_rate;
         auto audio_clock = AudioChannel::GetClock();
         auto video_clock = av_frame->best_effort_timestamp * av_q2d(time_base);
-        //av_frame->pts * av_q2d(time_base);
         double diff = video_clock - audio_clock;
         /**
          * 根据每秒视频播放的帧数（fps），确定一个延迟范围
-         * delay < 0.04 ===> 0.04 (1/fps)
+         * delay < 0.04 ===> 0.04
          * delay > 0.1 ===> 0.1
          * 0.04 < delay < 0.1 ===> delay
          * */
@@ -85,9 +84,10 @@ void VideoChannel::_play() {
             /// diff > sync 代表视频快了很多，就需要 delay 久一点，等待音频
             delay = delay + diff;
         }
-        LOGD("SYNC audio_clock:%f", audio_clock);
 
         av_usleep(delay * 1000000);
+
+        LOGI("SYNC Video Clock=%lf,Audio Clock=%lf,A-V=%lf", audio_clock, video_clock, -diff);
 
         /**
          * 因为ANativeWindow不支持显示YUV格式的数据，所以需要将FFmpeg解码出来YUV数据进行转换
@@ -109,13 +109,13 @@ void VideoChannel::_play() {
         releaseAvFrame(av_frame);
 
     }
-    /* 处理的一点经验：在栈中开辟了堆内存，不会它在栈里面怎么玩花活
+    /**
+     * 处理的一点经验：在栈中开辟了堆内存，不会它在栈里面怎么玩花活
      * 出栈时必须要释放掉。
      * */
     //av_free(&outputData[0]);
     releaseAvFrame(av_frame);
     sws_freeContext(sws_context);
-    LOGI("播放结束-------------");
     isPlaying = false;
 }
 
@@ -133,6 +133,13 @@ void VideoChannel::play() {
 void VideoChannel::stop() {
     isPlaying = false;
     setEnable(false);
+    helper = nullptr;
+    pthread_join(videoDecodeTask, nullptr);
+    pthread_join(videoPlayTask, nullptr);
+    if (window) {
+        ANativeWindow_release(window);
+        window = nullptr;
+    }
 }
 
 void VideoChannel::enable() {

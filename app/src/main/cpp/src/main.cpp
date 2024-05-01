@@ -74,6 +74,7 @@ Java_com_example_player_common_Player_nativeStop(JNIEnv *env, jobject thiz, jlon
     auto nativePlayer = reinterpret_cast<Player *>(native_ptr);
     LOGD("JNI nativePlayer->stop() Call");
     nativePlayer->stop();
+    delete nativePlayer;
 }
 
 

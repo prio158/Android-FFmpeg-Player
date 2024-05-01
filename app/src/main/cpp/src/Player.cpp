@@ -145,6 +145,7 @@ void Player::_startTaskCallback() {
     LOGD("Player READ,END");
     isPlaying = false;
     videoChannel->stop();
+    audioChannel->stop();
 }
 
 void Player::start() {
@@ -162,31 +163,44 @@ void Player::setNativeWindow(ANativeWindow *window_) {
     }
 }
 
-
 Player::~Player() {
-    if (avFormatContext != nullptr)
-        avformat_free_context(avFormatContext);
-    delete[] m_path;
+    release();
+    avformat_network_deinit();
+    if (m_path) {
+        delete[] m_path;
+        m_path = nullptr;
+    }
     delete playerHelper;
-    delete videoChannel;
 }
 
 void Player::stop() {
     LOGI("Player::stop()");
     isPlaying = false;
-    if (videoChannel)
-        videoChannel->stop();
-    if (audioChannel)
-        audioChannel->stop();
+    pthread_join(prepareTask, nullptr);
+    pthread_join(startTask, nullptr);
+    /** 确定线程退出后，才会释放VideoChannel、AudioChannel*/
+    release();
 }
 
 void Player::enable() {
     LOGI("Player::enable()");
     isPlaying = true;
-    if (videoChannel)
-        videoChannel->enable();
-    if (audioChannel)
-        audioChannel->enable();
+}
+
+void Player::release() {
+    if (videoChannel) {
+        videoChannel->stop();
+        videoChannel = nullptr;
+    }
+    if (audioChannel) {
+        audioChannel->stop();
+        audioChannel = nullptr;
+    }
+    if (avFormatContext) {
+        avformat_close_input(&avFormatContext);
+        avformat_free_context(avFormatContext);
+        avFormatContext = nullptr;
+    }
 }
 
 
