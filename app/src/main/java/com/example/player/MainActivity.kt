@@ -79,12 +79,6 @@ class MainActivity : AppCompatActivity() {
 				//此处能保证VideoChannel初始化完毕
 				surface?.let { player.setSurface(it) }
 				player.start()
-			},
-			onProgressCallback_ = {
-
-			},
-			onErrorCallback_ = {
-
 			}
 		)
 

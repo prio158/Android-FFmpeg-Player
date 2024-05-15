@@ -24,13 +24,9 @@ public:
 
     void loopEvent();
 
-    void stopLoop();
-
 private:
     std::vector<Timer::ptr> timers {};
-    bool isLooping = false;
     int m_epfd = 0;
-    int m_tickleFds[2]{};
 };
 
 

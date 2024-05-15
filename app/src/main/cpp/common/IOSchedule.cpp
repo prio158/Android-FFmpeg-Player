@@ -8,20 +8,10 @@
 IOSchedule::IOSchedule() {
     m_epfd = epoll_create(1);
     assert(m_epfd > 0);
-    int ret = pipe(m_tickleFds);
-    assert(ret == 0);
-    epoll_event event{};
-    memset(&event, 0, sizeof(event));
-    event.events = EPOLLET | EPOLLIN;
-    event.data.fd = m_tickleFds[0];
-    ret = fcntl(m_epfd, EPOLL_CTL_ADD, m_tickleFds[0], &event);
-    assert(ret >= 0);
-    ret = epoll_ctl(m_epfd, EPOLL_CTL_ADD, m_tickleFds[0], &event);
-    assert(ret == 0);
 }
 
 void IOSchedule::loopEvent() {
-    const uint64_t MAX_EVENTS = 256;
+    const uint64_t MAX_EVENTS = 1;
     auto *events = new epoll_event[MAX_EVENTS]();
     std::shared_ptr<epoll_event> shared_events(events, [](epoll_event *ptr) {
         delete[] ptr;
@@ -43,14 +33,9 @@ void IOSchedule::loopEvent() {
     }
 }
 
-void IOSchedule::stopLoop() {
-    isLooping = false;
-}
 
 IOSchedule::~IOSchedule() {
     close(m_epfd);
-    close(m_tickleFds[0]);
-    close(m_tickleFds[1]);
 }
 
 void IOSchedule::addTimerTask(const Timer::ptr &timer) {

@@ -24,6 +24,8 @@ add_library(
         common/IOSchedule.cpp
         common/Tools.h
         common/Tools.cpp
+        screenlive/ScreenLive.h
+        screenlive/ScreenLive.cpp
         ${SOURCE}
 )
 
