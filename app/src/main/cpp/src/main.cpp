@@ -86,3 +86,10 @@ Java_com_example_player_common_Player_nativeEnable(JNIEnv *env, jobject thiz,
     LOGD("JNI nativePlayer->enable() Call");
     nativePlayer->enable();
 }
+
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_example_player_common_ScreenLive_connect(JNIEnv *env, jobject thiz, jstring url) {
+
+}
